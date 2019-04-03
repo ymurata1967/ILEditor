@@ -327,6 +327,12 @@ namespace ILEditor.UserTools
                                     gothread = new Thread((ThreadStart)delegate
                                     {
                                         bool UploadResult = IBMiUtils.UploadMember(MemberInfo.GetLocalFile(), SaveAsWindow.SourceInfo().GetLibrary(), SaveAsWindow.SourceInfo().GetSPF(), SaveAsWindow.SourceInfo().GetMember());
+                                        //ymurata1967 Start IFSにアップロードしたテンポラリファイルをSJISに変換後にソースコピー
+                                        IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetUpTmpFileName()}') TOOBJ('{JpUtils.GetUpFileName()}') FROMCCSID(*OBJ) TOCCSID(943) DTAFMT(*BINARY) REPLACE(*YES)");
+                                        IBMi.RemoteCommand($"DLCOBJ OBJ(({SaveAsWindow.SourceInfo().GetLibrary()}/{SaveAsWindow.SourceInfo().GetSPF()} *FILE *EXCLRD {SaveAsWindow.SourceInfo().GetMember()}))", false);
+                                        IBMi.RemoteCommand($"CPYFRMSTMF FROMSTMF('{JpUtils.GetUpFileName()}') TOMBR('/QSYS.LIB/{SaveAsWindow.SourceInfo().GetLibrary()}.LIB/{SaveAsWindow.SourceInfo().GetSPF()}.FILE/{SaveAsWindow.SourceInfo().GetMember()}.MBR') MBROPT(*REPLACE)");
+                                        IBMi.RemoteCommand($"ALCOBJ OBJ(({SaveAsWindow.SourceInfo().GetLibrary()}/{SaveAsWindow.SourceInfo().GetSPF()} *FILE *EXCLRD {SaveAsWindow.SourceInfo().GetMember()})) WAIT(1)", false);
+                                        //ymurata1967 End
                                         if (UploadResult == false)
                                             MessageBox.Show("Failed to upload to " + MemberInfo.GetName() + ".");
 
@@ -343,6 +349,10 @@ namespace ILEditor.UserTools
                                     gothread = new Thread((ThreadStart)delegate
                                     {
                                         bool UploadResult = IBMiUtils.UploadFile(MemberInfo.GetLocalFile(), SaveAsWindow.SourceInfo().GetIFSPath());
+                                        //ymurata1967 Start IFSにアップロードしたテンポラリファイルをShift-Jisに変換。最終的にはUTF-8にする。
+                                        IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetUpTmpFileName()}') TOOBJ('{JpUtils.GetUpFileName()}') FROMCCSID(*OBJ) TOCCSID(943) DTAFMT(*BINARY) REPLACE(*YES)");
+                                        IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetUpFileName()}') TOOBJ('{SaveAsWindow.SourceInfo().GetIFSPath()}') FROMCCSID(*OBJ) TOCCSID(1208) DTAFMT(*TEXT) REPLACE(*YES)");
+                                        //ymurata1967 End
                                         if (UploadResult == false)
                                             MessageBox.Show("Failed to upload to " + MemberInfo.GetName() + "." + MemberInfo.GetExtension() + ".");
 
@@ -398,9 +408,19 @@ namespace ILEditor.UserTools
                             {
                                 case FileSystem.QSYS:
                                     UploadResult = IBMiUtils.UploadMember(SourceInfo.GetLocalFile(), SourceInfo.GetLibrary(), SourceInfo.GetObject(), SourceInfo.GetName());
+                                    //ymurata1967 Start IFSにアップロードしたテンポラリファイルをShift-Jisに変換後にソースコピー
+                                    IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetUpTmpFileName()}') TOOBJ('{JpUtils.GetUpFileName()}') FROMCCSID(*OBJ) TOCCSID(943) DTAFMT(*BINARY) REPLACE(*YES)");
+                                    IBMi.RemoteCommand($"DLCOBJ OBJ(({SourceInfo.GetLibrary()}/{SourceInfo.GetObject()} *FILE *EXCLRD {SourceInfo.GetName()}))", false);
+                                    IBMi.RemoteCommand($"CPYFRMSTMF FROMSTMF('{JpUtils.GetUpFileName()}') TOMBR('/QSYS.LIB/{SourceInfo.GetLibrary()}.LIB/{SourceInfo.GetObject()}.FILE/{SourceInfo.GetName()}.MBR') MBROPT(*REPLACE)");
+                                    IBMi.RemoteCommand($"ALCOBJ OBJ(({SourceInfo.GetLibrary()}/{SourceInfo.GetObject()} *FILE *EXCLRD {SourceInfo.GetName()})) WAIT(1)", false);
+                                    //ymurata1967 End
                                     break;
                                 case FileSystem.IFS:
                                     UploadResult = IBMiUtils.UploadFile(SourceInfo.GetLocalFile(), SourceInfo.GetRemoteFile());
+                                    //ymurata1967 Start IFSにアップロードしたテンポラリファイルをShift-Jisに変換。最終的にはUTF-8にする。
+                                    IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetUpTmpFileName()}') TOOBJ('{JpUtils.GetUpFileName()}') FROMCCSID(*OBJ) TOCCSID(943) DTAFMT(*BINARY) REPLACE(*YES)");
+                                    IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetUpFileName()}') TOOBJ('{SourceInfo.GetRemoteFile()}') FROMCCSID(*OBJ) TOCCSID(1208) DTAFMT(*TEXT) REPLACE(*YES)");
+                                    //ymurata1967 End
                                     break;
                             }
                             if (UploadResult == false)

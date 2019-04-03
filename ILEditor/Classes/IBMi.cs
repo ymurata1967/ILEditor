@@ -108,8 +108,8 @@ namespace ILEditor.Classes
 
                 if (OfflineMode == false)
                 {
-                    Client.UploadDataType = FtpDataType.ASCII;
-                    Client.DownloadDataType = FtpDataType.ASCII;
+                    Client.UploadDataType = FtpDataType.Binary;     //ymurata1967 ASCIIからBINARYに変更
+                    Client.DownloadDataType = FtpDataType.Binary;   //ymurata1967 ASCIIからBINARYに変更
 
                     //FTPES is configurable
                     if (IBMi.CurrentSystem.GetValue("useFTPES") == "true")
@@ -127,6 +127,8 @@ namespace ILEditor.Classes
 
                     //Change the user library list on connection
                     RemoteCommand($"CHGLIBL LIBL({ CurrentSystem.GetValue("datalibl").Replace(',', ' ')}) CURLIB({ CurrentSystem.GetValue("curlib") })");
+                    RemoteCommand($"MKDIR DIR('{JpUtils.GetRootTmpDir()}')");   //ymurata1967 ワークフォルダ作成
+                    RemoteCommand($"MKDIR DIR('{JpUtils.GetTmpDir()}')");       //ymurata1967 ワークフォルダ作成
 
                     System.Timers.Timer timer = new System.Timers.Timer();
                     timer.Interval = 60000;
@@ -189,7 +191,33 @@ namespace ILEditor.Classes
             try
             {
                 if (Client.IsConnected)
-                    Result = !Client.DownloadFile(Local, Remote, true);
+                {
+                    //---- ymurata1967 メンバーはtrimする----//
+                    //ダウンロードファイル名でメンバーかそれ以外かを判断。
+                    RemoteSource SourceFile;
+                    SourceFile = new RemoteSource("", Remote);
+                    if (SourceFile.GetName() == "DOWNMBR")
+                    {
+                        //FTPで落とすダウンロード先のファイル名をファイル名+.tmpとする。
+                        String tempLocal = Local + ".tmp";
+                        string line;
+                        string writeStr = "";
+                        Result = !Client.DownloadFile(tempLocal, Remote, true);
+                        StreamReader sr = new StreamReader(tempLocal, Program.Encoding);   //ダウンロードしたファイルをSJISで開く
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            writeStr += line.TrimEnd() + Environment.NewLine;   //Trimと改行をセット
+                        }
+                        sr.Close();
+                        File.WriteAllText(Local, writeStr, Program.Encoding);  //writeStrを書き出し（Localがエディタに表示される）
+                        File.Delete(tempLocal);//テンポラリファイルを削除
+                     //---- ymurata1967 ----//
+                    }
+                    else
+                    {
+                        Result = !Client.DownloadFile(Local, Remote, true);
+                    }
+                }
                 else
                     return true; //error
             }
@@ -210,7 +238,11 @@ namespace ILEditor.Classes
         public static bool UploadFile(string Local, string Remote)
         {
             if (Client.IsConnected)
-                return Client.UploadFile(Local, Remote, FtpExists.Overwrite);
+            {
+                //バイナリでアップロードするファイル名の取得 ymurata1967 
+                String tempRemote = JpUtils.GetUpTmpFileName();
+                return Client.UploadFile(Local, tempRemote, FtpExists.Overwrite);
+            }
             else
                 return false;
         }

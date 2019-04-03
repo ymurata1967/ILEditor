@@ -51,7 +51,12 @@ namespace ILEditor.Forms
 
                 Options.Add("REPLACE_OPTION => ''1''");
 
-                this.Command = "RUNSQL SQL('CALL QSYS2.GENERATE_SQL(''" + Obj + "'', ''" + Lib + "'', ''" + Type + "'', " + String.Join(", ", Options) + ")')";
+                //ymurata1967 Start
+                IBMiUtils.UsingQTEMPFiles(new[] { "QTMPSRC" });
+                IBMi.RemoteCommand("CRTSRCPF FILE(QTEMP/QTMPSRC) RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
+                IBMi.RemoteCommand("ADDPFM FILE(QTEMP/QTMPSRC) MBR(TMPMBR)");
+                this.Command = "RUNSQL SQL('CALL QSYS2.GENERATE_SQL(''" + Obj + "'', ''" + Lib + "'', ''" + Type + "'', ''QTMPSRC'',''QTEMP'',''TMPMBR''," + String.Join(", ", Options) + ")')";
+                //ymurata1967 End
                 this.Success = true;
                 this.Close();
             }

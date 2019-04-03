@@ -56,7 +56,7 @@ namespace ILEditor.UserTools
             this.Text = "Diff " + Path.GetFileNameWithoutExtension(LocalNew) + " -> " + Path.GetFileNameWithoutExtension(LocalOld);
 
             var dmp = new diff_match_patch();
-            var diffs = dmp.diff_main(File.ReadAllText(LocalNew), File.ReadAllText(LocalOld), false);
+            var diffs = dmp.diff_main(File.ReadAllText(LocalNew, Program.Encoding), File.ReadAllText(LocalOld, Program.Encoding), false);   //ymurata1967 エンコード追加
 
             foreach (Diff aDiff in diffs)
             {

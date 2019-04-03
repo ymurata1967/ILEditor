@@ -41,32 +41,44 @@ namespace ILEditor.Classes
         {
             if (IBMi.IsConnected())
             {
-                string Line = ""; BindingEntry Entry;
+                BindingEntry Entry;
                 List<BindingEntry> Entries = new List<BindingEntry>();
                 if (Lib == "*CURLIB") Lib = IBMi.CurrentSystem.GetValue("curlib");
                 
                 UsingQTEMPFiles(new[] { "BNDDIR", "BNDDATA" });
 
+                //ymurata1967 Start
+                IBMi.RemoteCommand("CRTPF FILE(QTEMP/BNDDATA) RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
                 IBMi.RemoteCommand("DSPBNDDIR BNDDIR(" + Lib + "/" + Obj + ") OUTPUT(*OUTFILE) OUTFILE(QTEMP/BNDDIR)");
-                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/BNDDATA AS (SELECT BNOBNM, BNOBTP, BNOLNM, BNOACT, BNODAT, BNOTIM FROM qtemp/bnddir) WITH DATA ') COMMIT(*NONE)");
-                string file = DownloadMember("QTEMP", "BNDDATA", "BNDDATA");
-
+                IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/BNDDATA (SELECT TRIM(BNOBNM)||'',''||TRIM(BNOBTP)||'',''||TRIM(BNOLNM)||'',''||TRIM(BNOACT)||'',''||BNODAT||'',''||BNOTIM FROM QTEMP/BNDDIR ORDER BY BNOBNM)') COMMIT(*NONE)");
+                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/BNDDATA.FILE/BNDDATA.MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                string file = DownloadMember("QTEMP", "BNDDATA", "BNDDATA", JpUtils.GetDwFileName());
+                //ymurata1967 End
                 if (file != "")
                 {
-                    foreach (string RealLine in File.ReadAllLines(file, Program.Encoding))
+                    //ymurata1967 ファイルの中身が無い場合はnullを返却するように改修
+                    string[] lines = File.ReadAllLines(file, Program.Encoding);
+                    if (lines.Length == 0)
                     {
-                        if (RealLine.Trim() != "")
+                        return null;
+                    }
+
+                    foreach (string line in lines)
+                    {
+                        if (line.Trim() != "")
                         {
                             Entry = new BindingEntry();
-                            Line = RealLine.PadRight(50);
+                            //ymurata1967 Start
+                            string[] arr = line.Split(',');
                             Entry.BindingLib = Lib;
                             Entry.BindingObj = Obj;
-                            Entry.Name = Line.Substring(0, 10).Trim();
-                            Entry.Type = Line.Substring(10, 7).Trim();
-                            Entry.Library = Line.Substring(17, 10).Trim();
-                            Entry.Activation = Line.Substring(27, 10).Trim();
-                            Entry.CreationDate = Line.Substring(37, 6).Trim();
-                            Entry.CreationTime = Line.Substring(43, 6).Trim();
+                            Entry.Name = arr[0];
+                            Entry.Type = arr[1];
+                            Entry.Library = arr[2];
+                            Entry.Activation = arr[3];
+                            Entry.CreationDate = arr[4].Trim();
+                            Entry.CreationTime = arr[5].Trim();
+                            //ymurata1967 End
                             Entries.Add(Entry);
                         }
                     }
@@ -88,7 +100,7 @@ namespace ILEditor.Classes
         {
             if (IBMi.IsConnected())
             {
-                string Line = ""; ILEObject Object;
+                ILEObject Object;
                 List<ILEObject> Objects = new List<ILEObject>();
                 if (Lib == "*CURLIB") Lib = IBMi.CurrentSystem.GetValue("curlib");
 
@@ -101,31 +113,41 @@ namespace ILEditor.Classes
                 
                 UsingQTEMPFiles(new[] { FileA, FileB });
 
+                //ymurata1967 Start
+                IBMi.RemoteCommand("CRTPF FILE(QTEMP/" + FileB + ") RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
                 IBMi.RemoteCommand("DSPOBJD OBJ(" + Lib + "/*ALL) OBJTYPE(" + Types + ") OUTPUT(*OUTFILE) OUTFILE(QTEMP/" + FileA + ")");
-                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/" + FileB + " AS (SELECT ODOBNM, ODOBTP, ODOBAT, char(ODOBSZ) as ODOBSZ, ODOBTX, ODOBOW, ODSRCF, ODSRCL, ODSRCM FROM qtemp/" + FileA + " order by ODOBNM) WITH DATA') COMMIT(*NONE)");
-
-                string file = DownloadMember("QTEMP", FileB, FileB);
-
+                IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/" + FileB + " (SELECT TRIM(ODOBNM)||'',''||TRIM(ODOBTP)||'',''||TRIM(ODOBAT)||'',''||TRIM(CHAR(ODOBSZ))||'',''||TRIM(REPLACE(ODOBTX,'','',''''))||'',''||TRIM(ODOBOW)||'',''||TRIM(ODSRCF)||'',''||TRIM(ODSRCL)||'',''||TRIM(ODSRCM) FROM QTEMP/" + FileA + " ORDER BY ODOBNM)') COMMIT(*NONE)");
+                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/" + FileB + ".FILE/" + FileB + ".MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                string file = DownloadMember("QTEMP", FileB, FileB, JpUtils.GetDwFileName());
+                //ymurata1967 End
                 if (file != "")
                 {
-                    foreach (string RealLine in File.ReadAllLines(file, Program.Encoding))
+                    //ymurata1967 ファイルの中身が無い場合はnullを返却
+                    string[] lines = File.ReadAllLines(file, Program.Encoding);
+                    if (lines.Length == 0)
+                    {
+                        return null;
+                    }
+
+                    foreach (string line in lines)
                     {
 
-                        if (RealLine.Trim() != "")
+                        if (line.Trim() != "")
                         {
                             Object = new ILEObject();
-                            Line = RealLine.PadRight(135);
+                            //ymurata1967 Start
+                            string[] arr = line.Split(',');
                             Object.Library = Lib;
-                            Object.Name = Line.Substring(0, 10).Trim();
-                            Object.Type = Line.Substring(10, 8).Trim();
-                            Object.Extension = Line.Substring(18, 10).Trim();
-                            UInt32.TryParse(Line.Substring(28, 12).Trim(), out Object.SizeKB);
-                            Object.Text = Line.Substring(40, 50).Trim();
-                            Object.Owner = Line.Substring(90, 10).Trim();
-                            Object.SrcSpf = Line.Substring(100, 10).Trim();
-                            Object.SrcLib = Line.Substring(110, 10).Trim();
-                            Object.SrcMbr = Line.Substring(120, 10).Trim();
-
+                            Object.Name = arr[0];
+                            Object.Type = arr[1];
+                            Object.Extension = arr[2];
+                            UInt32.TryParse(arr[3], out Object.SizeKB);
+                            Object.Text = arr[4];
+                            Object.Owner = arr[5];
+                            Object.SrcSpf = arr[6];
+                            Object.SrcLib = arr[7];
+                            Object.SrcMbr = arr[8];
+                            //ymurata1967 End
                             Objects.Add(Object);
                         }
                     }
@@ -165,25 +187,36 @@ namespace ILEditor.Classes
 
                 Editor.TheEditor.SetStatus("Fetching source-physical files for " + Lib + "...");
 
+                //ymurata1967 Start
+                IBMi.RemoteCommand("CRTPF FILE(QTEMP/" + FileB + ") RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
                 IBMi.RemoteCommand("DSPFD FILE(" + Lib + "/*ALL) TYPE(*ATR) OUTPUT(*OUTFILE) FILEATR(*PF) OUTFILE(QTEMP/" + FileA + ")");
-                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/" + FileB + " AS (SELECT PHFILE, PHLIB FROM QTEMP/" + FileA + " WHERE PHDTAT = ''S'' order by PHFILE) WITH DATA') COMMIT(*NONE)");
-
-                string file = DownloadMember("QTEMP", FileB, FileB);
-
+                IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/" + FileB + " (SELECT TRIM(PHFILE)||'',''||TRIM(PHLIB) FROM QTEMP/" + FileA + " WHERE PHDTAT = ''S'' ORDER BY PHFILE)') COMMIT(*NONE)");
+                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/" + FileB + ".FILE/" + FileB + ".MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                string file = DownloadMember("QTEMP", FileB, FileB, JpUtils.GetDwFileName());
+                //ymurata1967 End
                 if (file != "")
                 {
                     Boolean validName = true;
-                    string Line, Library, Object;
+                    string Library, Object;
                     ILEObject Obj;
-                    foreach (string RealLine in File.ReadAllLines(file, Program.Encoding))
+
+                    //ymurata1967 ファイルの中身が無い場合はnullを返却
+                    string[] lines = File.ReadAllLines(file, Program.Encoding);
+                    if (lines.Length == 0)
                     {
-                        if (RealLine.Trim() != "")
+                        return null;
+                    }
+
+                    foreach (string line in lines)
+                    {
+                        if (line.Trim() != "")
                         {
                             validName = true;
-                            Line = RealLine.PadRight(31);
-                            Object = Line.Substring(0, 10).Trim();
-                            Library = Line.Substring(10, 10).Trim();
-
+                            //ymurata1967 Start
+                            string[] arr = line.Split(',');
+                            Object = arr[0];
+                            Library = arr[1];
+                            //ymurata1967 End
                             Obj = new ILEObject();
                             Obj.Library = Library;
                             Obj.Name = Object;
@@ -243,23 +276,36 @@ namespace ILEditor.Classes
                 
                 UsingQTEMPFiles(new[] { TempName, Obj });
 
+                //ymurata1967 Start
+                IBMi.RemoteCommand("CRTPF FILE(QTEMP/" + Obj + ") RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
                 IBMi.RemoteCommand("DSPFD FILE(" + Lib + "/" + Obj + ") TYPE(*MBR) OUTPUT(*OUTFILE) OUTFILE(QTEMP/" + TempName + ")");
-                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/" + Obj + " AS (SELECT MBFILE, MBNAME, MBMTXT, MBSEU2, char(MBMXRL) as MBMXRL FROM QTEMP/" + TempName + " order by MBNAME) WITH DATA') COMMIT(*NONE)");
-
-                string file = DownloadMember("QTEMP", Obj, Obj);
+                IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/" + Obj + " (SELECT TRIM(MBFILE)||'',''||TRIM(MBNAME)||'',''||TRIM(REPLACE(MBMTXT,'','',''''))||'',''||TRIM(MBSEU2)||'',''||CHAR(TRIM(MBMXRL)) AS MBMXRL FROM QTEMP/" + TempName + " ORDER BY MBNAME)') COMMIT(*NONE)");
+                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/" + Obj + ".FILE/" + Obj + ".MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                string file = DownloadMember("QTEMP", Obj, Obj, JpUtils.GetDwFileName());
+                //ymurata1967 End
 
                 if (file != "")
                 {
-                    foreach (string RealLine in File.ReadAllLines(file, Program.Encoding))
+                    //ymurata1967 ファイルの中身が無い場合はnullを返却
+                    string[] lines = File.ReadAllLines(file, Program.Encoding);
+                    if (lines.Length == 0)
+                    {
+                        return null;
+                    }
+
+                    foreach (string RealLine in lines)
                     {
                         if (RealLine.Trim() != "")
                         {
-                            Line = RealLine.PadRight(90);
-                            Object = Line.Substring(0, 10).Trim();
-                            Name = Line.Substring(10, 10).Trim();
-                            Desc = Line.Substring(20, 50).Trim();
-                            Type = Line.Substring(70, 10).Trim();
-                            RcdLen = Line.Substring(80, 7).Trim();
+                            //ymurata1967 Start
+                            Line = RealLine;
+                            string[] arr = Line.Split(',');
+                            Object = arr[0];
+                            Name = arr[1];
+                            Desc = arr[2];
+                            Type = arr[3];
+                            RcdLen = arr[4];
+                            //ymurata1967 End
 
                             if (Name != "")
                             {
@@ -274,7 +320,7 @@ namespace ILEditor.Classes
                 }
                 else
                 {
-                    return null;
+                    return null;    //※このルーチンには入りません。
                 }
 
                 Editor.TheEditor.SetStatus("Fetched members for " + Lib + " / " + Obj + ".");
@@ -306,7 +352,7 @@ namespace ILEditor.Classes
         public static List<ILEObject[]> GetProgramReferences(string Lib, string Obj = "*ALL")
         {
             List<ILEObject[]> Items = new List<ILEObject[]>();
-            string Line, Library, Object, RefObj, RefLib, Type;
+            string Library, Object, RefObj, RefLib, Type;
 
             Lib = Lib.ToUpper();
             Obj = Obj.ToUpper();
@@ -318,23 +364,35 @@ namespace ILEditor.Classes
                 
                 UsingQTEMPFiles(new[] { "REFS", "REFSB" });
 
+                //ymurata1967 Start
+                IBMi.RemoteCommand("CRTPF FILE(QTEMP/REFSB) RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
                 IBMi.RemoteCommand("DSPPGMREF PGM(" + Lib + "/" + Obj + ") OUTPUT(*OUTFILE) OUTFILE(QTEMP/REFS)");
-                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/REFSB AS (SELECT WHLIB, WHPNAM, WHFNAM, WHLNAM, WHOTYP FROM qtemp/refs) WITH DATA') COMMIT(*NONE)");
-
-                string file = DownloadMember("QTEMP", "REFSB", "REFSB");
+                IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/REFSB (SELECT TRIM(WHLIB)||'',''||TRIM(WHPNAM)||'',''||TRIM(WHFNAM)||'',''||TRIM(WHLNAM)||'',''||TRIM(WHOTYP) FROM QTEMP/REFS)') COMMIT(*NONE)");
+                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/REFSB.FILE/REFSB.MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                string file = DownloadMember("QTEMP", "REFSB", "REFSB", JpUtils.GetDwFileName());
+                //ymurata1967 End
 
                 if (file != "")
                 {
-                    foreach (string RealLine in File.ReadAllLines(file, Program.Encoding))
+                    //ymurata1967 ファイルの中身が無い場合はnullを返却
+                    string[] lines = File.ReadAllLines(file, Program.Encoding);
+                    if (lines.Length == 0)
                     {
-                        if (RealLine.Trim() != "")
+                        return null;
+                    }
+
+                    foreach (string line in lines)
+                    {
+                        if (line.Trim() != "")
                         {
-                            Line = RealLine.PadRight(52);
-                            Library = Line.Substring(0, 10).Trim();
-                            Object = Line.Substring(10, 10).Trim();
-                            RefObj = Line.Substring(20, 11).Trim();
-                            RefLib = Line.Substring(31, 11).Trim();
-                            Type = Line.Substring(42, 10).Trim();
+                            //ymurata1967 Start
+                            string[] arr = line.Split(',');
+                            Library = arr[0];
+                            Object = arr[1];
+                            RefObj = arr[2];
+                            RefLib = arr[3];
+                            Type = arr[4];
+                            //ymurata1967 End
 
                             if (Library != "")
                             {
@@ -372,25 +430,41 @@ namespace ILEditor.Classes
                 {
                     Editor.TheEditor.SetStatus("Fetching spool file listing.. (can take a moment)");
 
-                    UsingQTEMPFiles(new[] { "SPOOL" });
-                    IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/SPOOL AS (SELECT Char(SPOOLED_FILE_NAME) as a, Char(COALESCE(USER_DATA, '''')) as b, Char(JOB_NAME) as c, Char(STATUS) as d, Char(FILE_NUMBER) as e FROM TABLE(QSYS2.OUTPUT_QUEUE_ENTRIES(''" + Lib + "'', ''" + Obj + "'', ''*NO'')) A WHERE USER_NAME = ''" + IBMi.CurrentSystem.GetValue("username").ToUpper() + "'' ORDER BY CREATE_TIMESTAMP DESC FETCH FIRST 25 ROWS ONLY) WITH DATA') COMMIT(*NONE)");
-                    file = DownloadMember("QTEMP", "SPOOL", "SPOOL");
+                    UsingQTEMPFiles(new[] { "SPOOL", "SPOOLTMP" });
+
+                    //ymurata1967 Start
+                    IBMi.RemoteCommand("CRTPF FILE(QTEMP/SPOOL) RCDLEN(80) IGCDTA(*YES)");
+                    IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/SPOOLTMP AS (SELECT CHAR(SPOOLED_FILE_NAME)||'',''||CHAR(COALESCE(USER_DATA, ''''))||'',''||CHAR(JOB_NAME)||'',''||CHAR(STATUS)||'',''||CHAR(FILE_NUMBER) AS A FROM TABLE(QSYS2.OUTPUT_QUEUE_ENTRIES(''" + Lib + "'', ''" + Obj + "'', ''*NO'')) A WHERE USER_NAME = ''" + IBMi.CurrentSystem.GetValue("username").ToUpper() + "'' ORDER BY CREATE_TIMESTAMP DESC FETCH FIRST 25 ROWS ONLY) WITH DATA') COMMIT(*NONE)");
+                    IBMi.RemoteCommand("CPYF FROMFILE(QTEMP/SPOOLTMP) TOFILE(QTEMP/SPOOL) MBROPT(*ADD) FMTOPT(*NOCHK)");
+                    IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/SPOOL.FILE/SPOOL.MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                    file = DownloadMember("QTEMP", "SPOOL", "SPOOL", JpUtils.GetDwFileName());
+                    //ymurata1967 End
                     Editor.TheEditor.SetStatus("Finished fetching spool file listing.");
                 }
 
                 if (file != "")
                 {
-                    string Line, SpoolName, UserData, Job, Status, Number;
-                    foreach (string RealLine in File.ReadAllLines(file, Program.Encoding))
+                    string SpoolName, UserData, Job, Status, Number;
+
+                    //ymurata1967 ファイルの中身が無い場合はnullを返却
+                    string[] lines = File.ReadAllLines(file, Program.Encoding);
+                    if (lines.Length == 0)
                     {
-                        if (RealLine.Trim() != "")
+                        return null;
+                    }
+
+                    foreach (string line in lines)
+                    {
+                        if (line.Trim() != "")
                         {
-                            Line = RealLine.PadRight(75);
-                            SpoolName = Line.Substring(0, 10).Trim();
-                            UserData = Line.Substring(10, 10).Trim();
-                            Job = Line.Substring(20, 28).Trim();
-                            Status = Line.Substring(48, 15).Trim();
-                            Number = Line.Substring(63, 11);
+                            //ymurata1967 Start
+                            string[] arr =line.Split(',');
+                            SpoolName = arr[0].Substring(2, 10).Trim(); //なぜかCPYFで先頭に制御コードと＋記号は入るので2byte以降から切り出す
+                            UserData = arr[1].Trim();
+                            Job = arr[2].Trim();
+                            Status = arr[3].Trim();
+                            Number = arr[4].Trim();
+                            //ymurata1967 End
 
                             if (SpoolName != "")
                             {
@@ -477,6 +551,12 @@ namespace ILEditor.Classes
                                         UsingQTEMPFiles(new[] { "JOBLOG" });
                                         IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/JOBLOG AS (SELECT char(MESSAGE_TEXT) as a FROM TABLE(QSYS2.JOBLOG_INFO(''*'')) A WHERE MESSAGE_TYPE = ''DIAGNOSTIC'') WITH DATA') COMMIT(*NONE)");
                                         IBMi.DownloadFile(filetemp, "/QSYS.lib/QTEMP.lib/JOBLOG.file/JOBLOG.mbr");
+                                        //ymurata1967 Start（正しく動かないのでコメントのまま）
+                                        //IBMi.RemoteCommand("CRTPF FILE(QTEMP/JOBLOG) RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
+                                        //IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/JOBLOG (SELECT CHAR(MESSAGE_TEXT) FROM TABLE(QSYS2.JOBLOG_INFO(''*'')) A WHERE MESSAGE_TYPE = ''DIAGNOSTIC'')') COMMIT(*NONE)");
+                                        //IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/JOBLOG.FILE/JOBLOG.MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                                        //IBMi.DownloadFile(filetemp, JpUtils.GetDwFileName());
+                                        //ymurata1967 End
                                     }
                                 }
                                 else
@@ -583,12 +663,14 @@ namespace ILEditor.Classes
             if (IBMi.IsConnected())
             {
                 string filetemp = GetLocalFile("SPOOLS", Job.Replace('/', '.'), Name + '-' + Number.ToString(), "SPOOL");
-                string remoteTemp = "/tmp/" + Name + ".spool";
-
-                Editor.TheEditor.SetStatus("Downloading spool file " + Name + "..");
+                //ymurata1967 Start
+                string remoteTemp = JpUtils.GetTmpDir() + "/" + Name + ".SPOOL";
+                Editor.TheEditor.SetStatus("Downloading spool file " + Name + ".."); 
                 IBMi.RemoteCommand("CPYSPLF FILE(" + Name + ") JOB(" + Job + ") SPLNBR(" + Number.ToString() + ") TOFILE(*TOSTMF) TOSTMF('" + remoteTemp + "') STMFOPT(*REPLACE)");
+                IBMi.RemoteCommand($"CPY OBJ('{remoteTemp}') TOOBJ('{JpUtils.GetDwFileName()}') FROMCCSID(*JOBCCSID) TOCCSID(943) DTAFMT(*TEXT) REPLACE(*YES)");
+                //ymurata1967 End
 
-                if (!IBMi.DownloadFile(filetemp, remoteTemp))
+                if (!IBMi.DownloadFile(filetemp, JpUtils.GetDwFileName()))  //ymurata1967
                 {
                     Editor.TheEditor.SetStatus("Downloaded spool file " + Name + ".");
                     return filetemp;
@@ -605,14 +687,14 @@ namespace ILEditor.Classes
             }
         }
 
-        public static string DownloadMember(string Lib, string Obj, string Mbr, string Ext = "")
+        public static string DownloadMember(string Lib, string Obj, string Mbr, string DownFileName, string Ext = "")
         {
             if (Lib == "*CURLIB") Lib = IBMi.CurrentSystem.GetValue("curlib");
             string filetemp = GetLocalFile(Lib, Obj, Mbr, Ext);
 
             if (IBMi.IsConnected())
             {
-                if (IBMi.DownloadFile(filetemp, "/QSYS.lib/" + Lib + ".lib/" + Obj + ".file/" + Mbr + ".mbr") == false)
+                if (IBMi.DownloadFile(filetemp, DownFileName) == false) //ymurata1967
                     return filetemp;
                 else
                     return "";
@@ -633,7 +715,7 @@ namespace ILEditor.Classes
 
             if (IBMi.IsConnected())
             {
-                if (IBMi.DownloadFile(filetemp, RemoteFile) == false)
+                if (IBMi.DownloadFile(filetemp, JpUtils.GetDwFileNameIfs()) == false)   //ymurata1967
                     return filetemp;
                 else
                     return "";

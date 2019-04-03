@@ -61,7 +61,7 @@ namespace ILEditor.UserTools
                         Name = Path.GetFileNameWithoutExtension(Path.GetFileName(Member)).ToUpper();
                         Extension = Path.GetExtension(Member).Substring(1).ToUpper();
                         CurrentFile = new TreeNode(Name, 2, 2); currentLine = 1;
-                        foreach (string Line in File.ReadAllLines(Member))
+                        foreach (string Line in File.ReadAllLines(Member, Program.Encoding))    //ymurata1967 エンコード追加
                         {
                             Contains = false;
                             if (Sensitive)

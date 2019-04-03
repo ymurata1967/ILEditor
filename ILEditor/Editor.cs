@@ -172,9 +172,19 @@ namespace ILEditor
                 switch (Source.GetFS())
                 {
                     case FileSystem.QSYS:
-                        resultFile = IBMiUtils.DownloadMember(Source.GetLibrary(), Source.GetObject(), Source.GetName(), Source.GetExtension());
+                        //ymurata1967 Start ソースを一度IFSにコピーしてからShift-jisに変換する。
+                        IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwTmpFileNameMbr()}')");
+                        IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwFileNameMbr()}')");
+                        IBMi.RemoteCommand($"CPY OBJ('/QSYS.LIB/{Source.GetLibrary()}.LIB/{Source.GetObject()}.FILE/{Source.GetName()}.MBR') TOOBJ('{JpUtils.GetDwTmpFileNameMbr()}') FROMCCSID(*OBJ) TOCCSID(*JOBCCSID) DTAFMT(*TEXT) REPLACE(*YES)"); 
+                        IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetDwTmpFileNameMbr()}') TOOBJ('{JpUtils.GetDwFileNameMbr()}') FROMCCSID(*JOBCCSID) TOCCSID(943) DTAFMT(*TEXT) REPLACE(*YES)");
+                        resultFile = IBMiUtils.DownloadMember(Source.GetLibrary(), Source.GetObject(), Source.GetName(), JpUtils.GetDwFileNameMbr(), Source.GetExtension());
+                        //ymurata1967 End
                         break;
                     case FileSystem.IFS:
+                        //ymurata1967 Start Shift-jisに変換する。
+                        IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwFileNameIfs()}')");
+                        IBMi.RemoteCommand($"CPY OBJ('{Source.GetRemoteFile()}') TOOBJ('{JpUtils.GetDwFileNameIfs()}') FROMCCSID(*OBJ) TOCCSID(932) DTAFMT(*TEXT) REPLACE(*YES)");
+                        //ymurata1967 End
                         resultFile = IBMiUtils.DownloadFile(Source.GetRemoteFile());
                         break;
                 }
@@ -212,6 +222,10 @@ namespace ILEditor
                     {
                         case FileSystem.QSYS:
                             MessageBox.Show("Unable to download member " + Source.GetLibrary() + "/" + Source.GetObject() + "." + Source.GetName() + ". Please check it exists and that you have access to the remote system.");
+                            break;
+                        //ymurata1967 ハンドリングされていないので追加
+                        case FileSystem.IFS:
+                            MessageBox.Show("Unable to download IFS " + Source.GetRemoteFile() + ". Please check it exists and that you have access to the remote system.");
                             break;
                     }
                 }
@@ -546,10 +560,11 @@ namespace ILEditor
 
             if (SelectFile.Success)
             {
-                IBMiUtils.UsingQTEMPFiles(new[] { "Q_GENSQL" });
+                //IBMiUtils.UsingQTEMPFiles(new[] { "Q_GENSQL" });  //ymurata1967 Q_GENSQLは使用しないためコメントアウト
+
                 if (IBMi.RemoteCommand(SelectFile.getCommand()))
                 {
-                    OpenSource(new RemoteSource("", "QTEMP", "Q_GENSQL", "Q_GENSQL", "SQL", false));
+                    OpenSource(new RemoteSource("", "QTEMP", "QTMPSRC", "TMPMBR", "SQL", false));   //ymurata1967
                 }
                 else
                 {

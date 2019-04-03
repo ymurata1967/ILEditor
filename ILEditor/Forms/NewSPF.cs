@@ -36,7 +36,7 @@ namespace ILEditor.Forms
             {
                 if (IBMi.IsConnected())
                 {
-                    string cmd = "CRTSRCPF FILE(" + lib.Text + "/" + spf.Text + ") RCDLEN(" + rcdLen.Value.ToString() + ") CCSID(" + ccsid.Text + ")";
+                    string cmd = "CRTSRCPF FILE(" + lib.Text + "/" + spf.Text + ") RCDLEN(" + rcdLen.Value.ToString() + ") CCSID(" + ccsid.Text + ") IGCDTA(*YES)"; //ymurata1967 IGCDTA(*YES)追加
                     if (IBMi.RemoteCommand(cmd))
                     {
                         Editor.TheEditor.AddTool(new MemberBrowse(lib.Text, spf.Text), WeifenLuo.WinFormsUI.Docking.DockState.DockRight);

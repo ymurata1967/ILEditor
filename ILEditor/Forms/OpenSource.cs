@@ -55,8 +55,13 @@ namespace ILEditor.Forms
                     break;
 
                 case 1:
+                    //ymurata1967 なぜかファイルが存在してもIBMi.FileExists(stmfPath.Text)がfalseを返すので、判定箇所をコメントアウトし、
+                    //とりあえず開くようにした。ただし存在しないファイルを指定すると以前のデータをダウンロードされるので注意！！
                     stmfPath.Text = stmfPath.Text.Trim();
-
+                    Editor.OpenSource(new RemoteSource("", stmfPath.Text));
+                    Stmf = stmfPath.Text;
+                    this.Close();
+                    /*
                     if (IBMi.FileExists(stmfPath.Text)) {
                         Editor.OpenSource(new RemoteSource("", stmfPath.Text));
                         Stmf = stmfPath.Text;
@@ -66,6 +71,7 @@ namespace ILEditor.Forms
                     {
                         MessageBox.Show("Chosen file does not exist.");
                     }
+                    */
                     break;
             }
             

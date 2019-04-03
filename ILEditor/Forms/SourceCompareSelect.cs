@@ -58,20 +58,40 @@ namespace ILEditor.Forms
             switch (newSourceBox.GetFS())
             {
                 case FileSystem.IFS:
+                    //ymurata1967 Start Shift-jisに変換する。
+                    IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwFileNameIfs()}')");
+                    IBMi.RemoteCommand($"CPY OBJ('{newSourceBox.GetIFSPath()}') TOOBJ('{JpUtils.GetDwFileNameIfs()}') FROMCCSID(*OBJ) TOCCSID(932) DTAFMT(*TEXT) REPLACE(*YES)");
                     NewFile = IBMiUtils.DownloadFile(newSourceBox.GetIFSPath());
+                    //ymurata1967 End
                     break;
                 case Classes.FileSystem.QSYS:
-                    NewFile = IBMiUtils.DownloadMember(newSourceBox.GetLibrary(), newSourceBox.GetSPF(), newSourceBox.GetMember());
+                    //ymurata1967 Start ソースを一度IFSにコピーしてからShift-jisに変換する。
+                    IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwTmpFileNameMbr()}')");
+                    IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwFileNameMbr()}')");
+                    IBMi.RemoteCommand($"CPY OBJ('/QSYS.LIB/{newSourceBox.GetLibrary()}.LIB/{newSourceBox.GetSPF()}.FILE/{newSourceBox.GetMember()}.MBR') TOOBJ('{JpUtils.GetDwTmpFileNameMbr()}') FROMCCSID(*OBJ) TOCCSID(*JOBCCSID) DTAFMT(*TEXT) REPLACE(*YES)");
+                    IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetDwTmpFileNameMbr()}') TOOBJ('{JpUtils.GetDwFileNameMbr()}') FROMCCSID(*JOBCCSID) TOCCSID(943) DTAFMT(*TEXT) REPLACE(*YES)");
+                    NewFile = IBMiUtils.DownloadMember(newSourceBox.GetLibrary(), newSourceBox.GetSPF(), newSourceBox.GetMember(), JpUtils.GetDwFileNameMbr());
+                    //ymurata1967 End
                     break;
             }
 
             switch (oldSourceBox.GetFS())
             {
                 case FileSystem.IFS:
+                    //ymurata1967 Start Shift-jisに変換する。
+                    IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwFileNameIfs()}')");
+                    IBMi.RemoteCommand($"CPY OBJ('{oldSourceBox.GetIFSPath()}') TOOBJ('{JpUtils.GetDwFileNameIfs()}') FROMCCSID(*OBJ) TOCCSID(932) DTAFMT(*TEXT) REPLACE(*YES)");
                     OldFile = IBMiUtils.DownloadFile(oldSourceBox.GetIFSPath());
+                    //ymurata1967 End
                     break;
                 case Classes.FileSystem.QSYS:
-                    OldFile = IBMiUtils.DownloadMember(oldSourceBox.GetLibrary(), oldSourceBox.GetSPF(), oldSourceBox.GetMember());
+                    //ymurata1967 Start ソースを一度IFSにコピーしてからShift-jisに変換する。
+                    IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwTmpFileNameMbr()}')");
+                    IBMi.RemoteCommand($"DEL OBJLNK('{JpUtils.GetDwFileNameMbr()}')");
+                    IBMi.RemoteCommand($"CPY OBJ('/QSYS.LIB/{oldSourceBox.GetLibrary()}.LIB/{oldSourceBox.GetSPF()}.FILE/{oldSourceBox.GetMember()}.MBR') TOOBJ('{JpUtils.GetDwTmpFileNameMbr()}') FROMCCSID(*OBJ) TOCCSID(*JOBCCSID) DTAFMT(*TEXT) REPLACE(*YES)");
+                    IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetDwTmpFileNameMbr()}') TOOBJ('{JpUtils.GetDwFileNameMbr()}') FROMCCSID(*JOBCCSID) TOCCSID(943) DTAFMT(*TEXT) REPLACE(*YES)");
+                    OldFile = IBMiUtils.DownloadMember(oldSourceBox.GetLibrary(), oldSourceBox.GetSPF(), oldSourceBox.GetMember(), JpUtils.GetDwFileNameMbr());
+                    //ymurata1967 End
                     break;
             }
 

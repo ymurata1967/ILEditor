@@ -25,7 +25,8 @@ namespace ILEditor.Classes
             obj = obj.Trim().ToUpper();
 
             _Success = false;
-            string filetemp = IBMiUtils.DownloadMember(lib, "EVFEVENT", obj);
+            IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/"+ lib + ".LIB/EVFEVENT.FILE/" + obj + ".MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)"); //ymurata1967
+            string filetemp = IBMiUtils.DownloadMember(lib, "EVFEVENT", obj, JpUtils.GetDwFileName());  //ymurata1967
 
             if (filetemp != "")
             {

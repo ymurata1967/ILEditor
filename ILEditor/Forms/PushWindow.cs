@@ -121,7 +121,7 @@ namespace ILEditor.Forms
             {
                 foreach (var Member in CreateSPFs)
                 {
-                    Commands.Add("CRTSRCPF FILE(" + lib.Text.Trim() + "/" + Member.Key + ") RCDLEN(" + Member.Value.ToString() + ")");
+                    Commands.Add("CRTSRCPF FILE(" + lib.Text.Trim() + "/" + Member.Key + ") RCDLEN(" + Member.Value.ToString() + ") IGCDTA(*YES)"); //ymurata1967 IGCDTA(*YES)を追加
                 }
 
                 foreach (string Member in DeleteMembers)
@@ -143,7 +143,7 @@ namespace ILEditor.Forms
                 {
                     Path = Member.Text.Trim().Split('/');
                     LocalFile = IBMiUtils.GetLocalFile(lib.Text.Trim(), Path[0], Path[1], UploadMembers[Path[0] + '/' + Path[1]]);
-                    PushList.Add(LocalFile, "/QSYS.lib/" + lib.Text.Trim() + ".lib/" + Path[0] + ".file/" + Path[1] + ".mbr");
+                    PushList.Add(LocalFile, "/QSYS.LIB/" + lib.Text.Trim() + ".LIB/" + Path[0] + ".FILE/" + Path[1] + ".MBR");  //ymurata1967 大文字に変更
                 }
             }
 
@@ -152,8 +152,17 @@ namespace ILEditor.Forms
             {
                 foreach (var File in PushList)
                 {
-                    if (IBMi.UploadFile(File.Key, File.Value) == false)
+                    //if (IBMi.UploadFile(File.Key, File.Value) == false)
+                    //    Success = false;
+                    if (IBMi.UploadFile(File.Key, JpUtils.GetUpTmpFileName()) == false) //ymurata1967
                         Success = false;
+                    else
+                    {
+                        //ymurata1967 Start
+                        IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetUpTmpFileName()}') TOOBJ('{JpUtils.GetUpFileName()}') FROMCCSID(*OBJ) TOCCSID(943) DTAFMT(*BINARY) REPLACE(*YES)");
+                        IBMi.RemoteCommand($"CPYFRMSTMF FROMSTMF('{JpUtils.GetUpFileName()}') TOMBR('{File.Value}') MBROPT(*REPLACE)");
+                        //ymurata1967 End
+                    }
                 }
 
                 if (Success)

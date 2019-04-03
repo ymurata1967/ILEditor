@@ -158,14 +158,16 @@
             this.host.TabIndex = 7;
             // 
             // selectedFont
-            // 
+            // ymurata1967 日本語フォント追加
             this.selectedFont.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.selectedFont.FormattingEnabled = true;
             this.selectedFont.Items.AddRange(new object[] {
             "Consolas",
             "Courier New",
             "Lucida Console",
-            "Lucida Sans Typewriter"});
+            "Lucida Sans Typewriter",
+            "ＭＳ ゴシック",
+            "ＭＳ 明朝"});
             this.selectedFont.Location = new System.Drawing.Point(220, 6);
             this.selectedFont.Name = "selectedFont";
             this.selectedFont.Size = new System.Drawing.Size(135, 21);

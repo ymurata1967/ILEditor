@@ -105,7 +105,13 @@ namespace ILEditor.Forms
             bool isOkay = true;
             foreach (var File in CloneList)
             {
-                if (IBMi.DownloadFile(File.Value, File.Key) == true) //Error?
+                //ymurata1967 Start
+                string[] arr = JpUtils.GetRemoteName(File.Key);
+                IBMi.RemoteCommand($"CPY OBJ('/QSYS.LIB/{arr[0]}.LIB/{arr[1]}.FILE/{arr[2]}.MBR') TOOBJ('{JpUtils.GetDwTmpFileNameMbr()}') FROMCCSID(*OBJ) TOCCSID(*JOBCCSID) DTAFMT(*TEXT) REPLACE(*YES)");
+                IBMi.RemoteCommand($"CPY OBJ('{JpUtils.GetDwTmpFileNameMbr()}') TOOBJ('{JpUtils.GetDwFileNameMbr()}') FROMCCSID(*JOBCCSID) TOCCSID(943) DTAFMT(*TEXT) REPLACE(*YES)");
+                //ymurata1967 End
+
+                if (IBMi.DownloadFile(File.Value, JpUtils.GetDwFileNameMbr()) == true) //ymurata1967 Error?
                 {
                     isOkay = false;
                     break;
