@@ -541,7 +541,7 @@ namespace ILEditor.UserTools
         {
             if (this.ReadOnly) return;
 
-            string[] Lines = textEditor.Text.Split(new string[] { "\n", "\r" }, StringSplitOptions.None);
+            string[] Lines = textEditor.Text.Split(new string[] { "\n", "\r", Environment.NewLine }, StringSplitOptions.None);
             textEditor.SelectAll();
             textEditor.SelectedText = "";
             int length = (RcdLen > 0 ? RcdLen : 80);
