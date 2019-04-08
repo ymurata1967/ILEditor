@@ -1,39 +1,76 @@
-# [ILEditor](https://worksofbarry.com/ileditor/)
+# ILEditorとは？
+IBMi専用の無料で使用できる開発環境(IDE)です。
+IBMiのソースをPCにダウンロードして編集したりコンパイルが出来きたりするのですが、残念ながら日本語のソースは文字化けして正しく動きません。
+日本語のソースを文字化けしないように改修したので記事にしました。
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W68TZG649MFTQ&source=url)
-[<img src="https://img.shields.io/badge/slack-ileditor-orange.svg?logo=slack">](https://join.slack.com/t/ileditor/shared_invite/enQtNTczMDUxMzcwMTk5LTA4NTQxMjU5N2E0MzQ1YzJjZTZhMzk5ZmUyNDgwMmRlOWM4Mzg4OGYyNzYwNjQxYzM2YzkzMjhiZTc2OTljYmE)
+# インストール方法
+1. [本家のサイト](https://worksofbarry.com/ileditor/)からダウンロードしてインストールして下さい。
+2. [ここ](https://github.com/ymurata1967/ILEditor/releases/tag/1.6.7.0Jp)からexeファイルをダウンロードし、インストールされた同じフォルダに置いて下さい。
+なお、オリジナルを消したくない場合はILEditorJp.exe等適当に名前を変更して同フォルダに置いて下さい。
 
-![Welcome Screen](https://i.imgur.com/Kl1DQIf.png)
+# 文字化け対応方法
+以前に[IBMiCmdをShiftJis対応してみた](https://qiita.com/yamurata/items/7313094a0080f4f74283)という記事で、notepad++のpluginをやはり文字化け対応したのですが、同じ方法では駄目でした。
+notepad++の時はftpのダウンロードやアップロード時に日本語が通るようにしていたのですが、ILEditorではFluentFTPというC#ネイティブのFTPクライアントライブラリが使用されています。
 
-ILEditor is an editor for development of ILE applications on IBM i. ILEditor will support development with any ILE language, be it CL, RPG, COBOL, C or C++. Error listing and syntax highlighting is available for all ILE languages.
+当初はFluentFTP側で対処出来ないかテストしていたのですがどうも上手く動かず、
+仕方なくIBMi側でコード変換してからバイナリモードでダウンロード、アップロードするようにしました。
 
-**ILEditor requires IBM i release V7R1 or higher.**
+基本的には、
+1. 対象のソースをCPYコマンドでIFSにコピー。
+2. コピーされたソースをCPYコマンドでコード変換（CCSID=943）。
+3. バイナリモードでダウンロード。
+という方法で実現しています。
 
-## Features
+アップロードはこの逆を行います。
 
-* Source member editing (+ browsing & diff view)
-* Inline compiling & error listing
-* Multiple system configurations
-* Basic CL Formatting
-* ILE syntax highlighting
-* Store members locally & search locally
-* Integrated spool file listing
-* Light and dark modes
-* Offline mode for when you're on the go
-* Support for FTPES (requires [setup on IBM i](http://www-01.ibm.com/support/docview.wss?uid=nas8N1014798))
+# ワークディレクトリ
+上記の実装にしたため、IFS上にコード変換用のワークファイルを作成します。
+/tmpフォルダ配下に
+/ILEDITOR/<ユーザー名>/
+フォルダを作成し、そこにワークファイルを作成します。
 
-## Installation
+※ILEDITORを使用しなくなった際は手動で削除して下さい。
 
-* You can install from the ClickOnce installer which will also prompt you when an update is available. [Download here](http://worksofbarry.com/ileditor/).
-* Build from source. Clone from GitHub, open the project into Visual Studio and build from there.
+# エディタ部の文字コード
+Shift-Jisにしています。
+なお、日本語フォントを追加しました。（ＭＳ ゴシック、ＭＳ 明朝）
+Connetion SettingsのEditorタブで指定出来ます。
 
-## Contributing
+# IFSにあるファイルの表示／保存
+ILEditorではIFSにあるテキストファイルが表示できますが、エディタ部はShift-Jis固定なので
+IFS上にあるファイルもいったんCCSID=943に変換してからダウンロードします。
 
-We are open to issues (which can be feature requests) and pull requests.
+SAVEするとIFSに反映されますがこの時はUTF-8で保存する仕様としました。
+本来はダウンロードする際に元の文字コードを保持し、そのままアップロードするべきですが、
+そこまで気力が無く・・・。
 
-## Libraries used
+という事で、IFSを保存（アップロード）する際は気を付けてください。
 
-* [flaticon](https://www.flaticon.com/authors/simpleicon)
-* [FluentFTP](https://github.com/robinrodricks/FluentFTP)
-* [AvalonEdit](https://github.com/icsharpcode/AvalonEdit)
-* [DockPanelSuite](http://dockpanelsuite.com/)
+# 日本語化できなかった部分
+1. 新しいソースメンバーを作る事が出来ますが、その際に入力するテキストに日本語を入れると化けます。
+2. コンパイルエラーの時にジョブログを表示する「show job log on compile」というオプションがあるのですが、チェックを入れると動きがおかしくなるようで、日本語はしませんでした。
+
+# ソースを表示する際にエラーが出る場合
+文字コード変換はIBMiで行いますがコード変換に失敗するとソース表示時にエラーが発生します。
+![ileditor01.PNG](https://qiita-image-store.s3.amazonaws.com/0/146069/e152d581-3b65-12cc-634e-8ad5fd04e1cf.png)
+（例えば、シフトアウト有り／シフトイン無しのソースだと変換エラーになります。）
+Help→Session FTP Logでログが表示されるので、エラーが発生したコマンドを5250から実行してみる、WRKACTJOBのJOBLOGからエラーのコマンドを特定する、等でエラーの原因を特定してみて下さい。
+
+# ログインするユーザーのCCSID
+5026でも5035でも問題無いかと思いますが、ソースのCCSIDとログインユーザーのCCSIDは合わせてください。
+また65535はダメなので注意して下さい。
+（一部、SQLのREPLACE関数を使用していますが65535だと実行できないようです。）
+
+# 応用編（バージョン管理）
+ダウンロードに使用されているフォルダをバージョン管理対象にすれば可能かと思われます。
+
+ILEditorは
+C:\Users\ユーザー名\AppData\Roaming\ILEditorData\source\システム名\ライブラリ名\ソースファイル名\メンバー名
+という階層でデータを保持します。
+
+以下はSVNで変更差分を取ってみた例です。
+![ileditor02.PNG](https://qiita-image-store.s3.amazonaws.com/0/146069/0581da14-0277-c39a-54f0-2898601dfa31.png)
+
+なお、このツールを使用する事により障害等が発生しても一切の責任を負いません。自己責任でお願い致します。
+海外は良いツールが沢山ありますねぇ。
+
