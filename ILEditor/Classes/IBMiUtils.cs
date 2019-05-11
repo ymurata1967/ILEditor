@@ -48,10 +48,10 @@ namespace ILEditor.Classes
                 UsingQTEMPFiles(new[] { "BNDDIR", "BNDDATA" });
 
                 //ymurata1967 Start
-                IBMi.RemoteCommand("CRTPF FILE(QTEMP/BNDDATA) RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
+                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/BNDDATA (A GRAPHIC(198) CCSID 1200 NOT NULL)') COMMIT(*NONE)");
                 IBMi.RemoteCommand("DSPBNDDIR BNDDIR(" + Lib + "/" + Obj + ") OUTPUT(*OUTFILE) OUTFILE(QTEMP/BNDDIR)");
                 IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/BNDDATA (SELECT TRIM(BNOBNM)||'',''||TRIM(BNOBTP)||'',''||TRIM(BNOLNM)||'',''||TRIM(BNOACT)||'',''||BNODAT||'',''||BNOTIM FROM QTEMP/BNDDIR ORDER BY BNOBNM)') COMMIT(*NONE)");
-                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/BNDDATA.FILE/BNDDATA.MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                IBMi.RemoteCommand("CPYTOIMPF FROMFILE(QTEMP/BNDDATA) TOSTMF('" + JpUtils.GetDwFileName() + "') MBROPT(*REPLACE) STMFCCSID(943) RCDDLM(*CRLF) DTAFMT(*FIXED) RMVBLANK(*TRAILING)");
                 string file = DownloadMember("QTEMP", "BNDDATA", "BNDDATA", JpUtils.GetDwFileName());
                 //ymurata1967 End
                 if (file != "")
@@ -114,10 +114,10 @@ namespace ILEditor.Classes
                 UsingQTEMPFiles(new[] { FileA, FileB });
 
                 //ymurata1967 Start
-                IBMi.RemoteCommand("CRTPF FILE(QTEMP/" + FileB + ") RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
+                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/" + FileB + " (A GRAPHIC(198) CCSID 1200 NOT NULL)') COMMIT(*NONE)");
                 IBMi.RemoteCommand("DSPOBJD OBJ(" + Lib + "/*ALL) OBJTYPE(" + Types + ") OUTPUT(*OUTFILE) OUTFILE(QTEMP/" + FileA + ")");
                 IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/" + FileB + " (SELECT TRIM(ODOBNM)||'',''||TRIM(ODOBTP)||'',''||TRIM(ODOBAT)||'',''||TRIM(CHAR(ODOBSZ))||'',''||TRIM(REPLACE(ODOBTX,'','',''''))||'',''||TRIM(ODOBOW)||'',''||TRIM(ODSRCF)||'',''||TRIM(ODSRCL)||'',''||TRIM(ODSRCM) FROM QTEMP/" + FileA + " ORDER BY ODOBNM)') COMMIT(*NONE)");
-                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/" + FileB + ".FILE/" + FileB + ".MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                IBMi.RemoteCommand("CPYTOIMPF FROMFILE(QTEMP/" + FileB + ") TOSTMF('" + JpUtils.GetDwFileName() + "') MBROPT(*REPLACE) STMFCCSID(943) RCDDLM(*CRLF) DTAFMT(*FIXED) RMVBLANK(*TRAILING)");
                 string file = DownloadMember("QTEMP", FileB, FileB, JpUtils.GetDwFileName());
                 //ymurata1967 End
                 if (file != "")
@@ -188,10 +188,10 @@ namespace ILEditor.Classes
                 Editor.TheEditor.SetStatus("Fetching source-physical files for " + Lib + "...");
 
                 //ymurata1967 Start
-                IBMi.RemoteCommand("CRTPF FILE(QTEMP/" + FileB + ") RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
+                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/" + FileB + " (A GRAPHIC(198) CCSID 1200 NOT NULL)') COMMIT(*NONE)");
                 IBMi.RemoteCommand("DSPFD FILE(" + Lib + "/*ALL) TYPE(*ATR) OUTPUT(*OUTFILE) FILEATR(*PF) OUTFILE(QTEMP/" + FileA + ")");
                 IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/" + FileB + " (SELECT TRIM(PHFILE)||'',''||TRIM(PHLIB) FROM QTEMP/" + FileA + " WHERE PHDTAT = ''S'' ORDER BY PHFILE)') COMMIT(*NONE)");
-                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/" + FileB + ".FILE/" + FileB + ".MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                IBMi.RemoteCommand("CPYTOIMPF FROMFILE(QTEMP/" + FileB + ") TOSTMF('" + JpUtils.GetDwFileName() + "') MBROPT(*REPLACE) STMFCCSID(943) RCDDLM(*CRLF) DTAFMT(*FIXED) RMVBLANK(*TRAILING)");
                 string file = DownloadMember("QTEMP", FileB, FileB, JpUtils.GetDwFileName());
                 //ymurata1967 End
                 if (file != "")
@@ -277,10 +277,10 @@ namespace ILEditor.Classes
                 UsingQTEMPFiles(new[] { TempName, Obj });
 
                 //ymurata1967 Start
-                IBMi.RemoteCommand("CRTPF FILE(QTEMP/" + Obj + ") RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
+                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/" + Obj + " (A GRAPHIC(198) CCSID 1200 NOT NULL)') COMMIT(*NONE)");
                 IBMi.RemoteCommand("DSPFD FILE(" + Lib + "/" + Obj + ") TYPE(*MBR) OUTPUT(*OUTFILE) OUTFILE(QTEMP/" + TempName + ")");
                 IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/" + Obj + " (SELECT TRIM(MBFILE)||'',''||TRIM(MBNAME)||'',''||TRIM(REPLACE(MBMTXT,'','',''''))||'',''||TRIM(MBSEU2)||'',''||CHAR(TRIM(MBMXRL)) AS MBMXRL FROM QTEMP/" + TempName + " ORDER BY MBNAME)') COMMIT(*NONE)");
-                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/" + Obj + ".FILE/" + Obj + ".MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                IBMi.RemoteCommand("CPYTOIMPF FROMFILE(QTEMP/" + Obj + ") TOSTMF('" + JpUtils.GetDwFileName() + "') MBROPT(*REPLACE) STMFCCSID(943) RCDDLM(*CRLF) DTAFMT(*FIXED) RMVBLANK(*TRAILING)");
                 string file = DownloadMember("QTEMP", Obj, Obj, JpUtils.GetDwFileName());
                 //ymurata1967 End
 
@@ -365,10 +365,10 @@ namespace ILEditor.Classes
                 UsingQTEMPFiles(new[] { "REFS", "REFSB" });
 
                 //ymurata1967 Start
-                IBMi.RemoteCommand("CRTPF FILE(QTEMP/REFSB) RCDLEN(" + JpUtils.GetQtempRcdLen() + ") IGCDTA(*YES)");
+                IBMi.RemoteCommand("RUNSQL SQL('CREATE TABLE QTEMP/REFSB (A GRAPHIC(198) CCSID 1200 NOT NULL)') COMMIT(*NONE)");
                 IBMi.RemoteCommand("DSPPGMREF PGM(" + Lib + "/" + Obj + ") OUTPUT(*OUTFILE) OUTFILE(QTEMP/REFS)");
                 IBMi.RemoteCommand("RUNSQL SQL('INSERT INTO QTEMP/REFSB (SELECT TRIM(WHLIB)||'',''||TRIM(WHPNAM)||'',''||TRIM(WHFNAM)||'',''||TRIM(WHLNAM)||'',''||TRIM(WHOTYP) FROM QTEMP/REFS)') COMMIT(*NONE)");
-                IBMi.RemoteCommand("CPYTOSTMF FROMMBR('/QSYS.LIB/QTEMP.LIB/REFSB.FILE/REFSB.MBR') TOSTMF('" + JpUtils.GetDwFileName() + "') STMFOPT(*REPLACE) STMFCCSID(943)");
+                IBMi.RemoteCommand("CPYTOIMPF FROMFILE(QTEMP/REFSB) TOSTMF('" + JpUtils.GetDwFileName() + "') MBROPT(*REPLACE) STMFCCSID(943) RCDDLM(*CRLF) DTAFMT(*FIXED) RMVBLANK(*TRAILING)");
                 string file = DownloadMember("QTEMP", "REFSB", "REFSB", JpUtils.GetDwFileName());
                 //ymurata1967 End
 

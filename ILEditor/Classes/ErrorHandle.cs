@@ -104,7 +104,8 @@ namespace ILEditor.Classes
                         break;
 
                     case "EXPANSION":
-                        _Expansions[_FileID].Add(new expRange(int.Parse(pieces[6]), int.Parse(pieces[7])));
+                        // ymurata1967 例外になるのでコメントアウト
+                        // _Expansions[_FileID].Add(new expRange(int.Parse(pieces[6]), int.Parse(pieces[7])));
                         break;
 
                     case "ERROR":
